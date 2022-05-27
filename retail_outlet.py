@@ -1,51 +1,11 @@
 
 import re
-import pymongo 
 from requests import get
-from colorama import init, Fore, Style
+from colorama import Fore, Style
+from database_manager import DatabaseManager
 
 API_RETAILS = 'https://www.punti-vendita.com/esselunga{}.htm'
 ONLINE_MODE = False
-
-class DatabaseManager:
-    '''
-    Class to manage CRUD operations on a database.
-    Before doing any operation, user should connect to database
-    and select the proper collection to operate with
-    '''
-
-    def __init__(self, user="admin", password="password") -> None:
-        self.__myclient = pymongo.MongoClient(f"mongodb://{user}:{password}@127.0.0.1:27017/")
-
-    def connect_to_database(self, database_name="retail", collection_name="retails_list"):
-        self.__database = self.__myclient[database_name]
-        self.__collection = self.__database[collection_name]
-
-    def select_collection(self, collection_name="retails_list"):
-        # Check collection availability
-        collections = self.__database.list_collection_names()
-        if not collection_name in collections:
-            print(Fore.YELLOW + '[DB] Warning: ' + Style.RESET_ALL + f"collection [{collection_name}] is empty. Will be created")
-        self.__collection = self.__database[collection_name]
-
-    # General Write operation
-    def insert_document(self, document:list[dict]) -> bool:
-        res = False
-        if len(document) > 1:
-            res = self.__collection.insert_many(document) != None
-        else:
-            res = self.__collection.insert_one(document[0]) != None
-        return res
-    
-    # General Read operation
-    def execute_query(self, query):
-        collections = self.__database.list_collection_names()
-        # Check collection availability
-        if not self.__collection.name in collections:
-            print(Fore.YELLOW + '[DB] Warning: ' + Style.RESET_ALL + f"collection [{self.__collection.name}] does not exist")
-            return []
-
-        return self.__collection.find(*query)
         
 class RetailBuilder:
     """
@@ -60,14 +20,14 @@ class RetailBuilder:
         self.__manager = DatabaseManager()
         self.__manager.connect_to_database(database_name, collection_name)
         self.__manager.select_collection(collection_name)
-        res = list(self.__manager.execute_query({}))
+        res = list(self.__manager.execute_query({})) 
 
         # Check if default data is available
         if len(res) == 0:
             print(Fore.YELLOW + 'Warning: ' + Style.RESET_ALL + f"default [{collection_name}] collection is empty. Downloading...")
             self.download_retails()    
 
-            # Saving to database
+            # Saving retials cities to database
             self.__manager.insert_document([self.__available_retails_cities])
         
         # Loading cities from database
@@ -91,6 +51,7 @@ class RetailBuilder:
             return 
         for elem in match:
             self.__available_retails_cities[str(elem)] = API_RETAILS.format('-' + elem)
+        return self.__available_retails_cities.keys()
 
     def show_available_cities(self):
         print(Fore.GREEN + 'Available cities:' + Style.RESET_ALL)
@@ -170,13 +131,5 @@ class RetailBuilder:
             print(Fore.GREEN + f'Retails [{city if city else "all cities"}]:' + Style.RESET_ALL)
             for i, retail in enumerate(res[0]['retails']):
                 print(f'{i}. {retail}' + Style.RESET_ALL)
-        return res[0]['retails']
+        return res[0]['retails']  
 
-# Driver code
-if __name__ == "__main__":
-    init()
-    print(Fore.GREEN + 'Retail script started ' + Style.RESET_ALL)
-    retail = RetailBuilder()
-    retail.show_available_cities()
-    retail.create_retails_by_city("Asti")
-    retails = retail.get_retails("asti")

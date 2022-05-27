@@ -23,7 +23,7 @@ def produce_numbers_up_to(limit: int) -> None:
 # When using this function make sure to start the json consumer script
 def produce_numbers_from_json():
     # Opening JSON file
-    f = open('kafka-tests/numbers.json')
+    f = open('./numbers.json')
     data = json.load(f)
     for elem in data:
         producer.send('test', value=elem)

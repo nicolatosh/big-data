@@ -62,7 +62,7 @@ class RetailBuilder:
 
     def create_retails_by_city(self, city: str) -> None:
         '''
-        Creates the list of retails given a city
+        Creates the list of retails given a city. It is saved into database collection
         '''
         city = city.lower()
         self.__manager.select_collection(self.database_collections_names['retails'])
@@ -112,6 +112,14 @@ class RetailBuilder:
 
         print(Fore.GREEN + f'Retails of city [{city}] ready' + Style.RESET_ALL)
 
+    
+    def create_all_retails(self):
+        """
+        Creates retails for all the available cities
+        """
+        for city in self.__available_retails_cities:
+            self.create_retails_by_city(city)
+
 
     def get_retails(self, city="") -> list:
         '''
@@ -127,9 +135,5 @@ class RetailBuilder:
         if len(res) == 0:
             print(Fore.YELLOW + f'No retails found in the city [{city}]' + Style.RESET_ALL)
             return []
-        else:
-            print(Fore.GREEN + f'Retails [{city if city else "all cities"}]:' + Style.RESET_ALL)
-            for i, retail in enumerate(res[0]['retails']):
-                print(f'{i}. {retail}' + Style.RESET_ALL)
         return res[0]['retails']  
 

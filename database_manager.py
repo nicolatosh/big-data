@@ -26,7 +26,6 @@ class DatabaseManager:
     def insert_document(self, document:list[dict]) -> bool:
         res = False
         if len(document) > 1:
-            print("DOC", document[0])
             res = self.__collection.insert_many(document) != None
         else:
             res = self.__collection.insert_one(document[0]) != None

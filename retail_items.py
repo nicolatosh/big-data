@@ -76,8 +76,8 @@ class RetailItems:
 
         # Check for items already present
         res = list(self.__db_manager.execute_query([{}]))
-        if len(res) is not 0:
-            print(Fore.YELLOW + f'Warning: items are already present in collection [{self.__collection}]' + Style.RESET_ALL)
+        if len(res) != 0:
+            print(Fore.YELLOW + f'Info: items are already present in collection [{self.__collection}]' + Style.RESET_ALL)
             return
 
         # Records creation
@@ -97,7 +97,7 @@ class RetailItems:
         '''
         res = self.__db_manager.execute_query([{},{ "_id": 0,}])
         res = list(res.limit(limit if limit else 0))
-        if len(res) is 0:
+        if len(res) == 0:
            return []
         return res
         

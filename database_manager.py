@@ -40,3 +40,15 @@ class DatabaseManager:
             return []
 
         return self.__collection.find(*query)
+
+    def update(self, query, newvalues):
+
+        """
+        Usage example:
+            - myquery = { "address": "Valley 345" }
+            - newvalues = { "$set": { "address": "Canyon 123" } }
+
+            "$inc" can increase/decrease values
+        """
+        res = self.__collection.update_one(query, newvalues)
+        print(res)

@@ -84,7 +84,6 @@ class RetailBuilder:
             if ONLINE_MODE:
                 page = get(self.__available_retails_cities[city])
                 data = page.text
-                print(data)
             else:
                 # Offline mode: data is taken from dump of online pages         
                 try:

@@ -24,9 +24,12 @@ if __name__ == "__main__":
     # Collecting available goods
     retail_items = RetailItems()
     retail_items.create_and_store_items()
-    items = retail_items.get_items(limit=10)
-    simple_printer(items, "items")
+    items = retail_items.get_items()
+    simple_printer(items[:10], "items")
 
+    food_categories = [category for category in set(map(lambda x: x["category"], items))]
+    simple_printer(food_categories, "food categories")
+  
     # Generating customers
     customers_gen = CustomersGenerator()
     customers = customers_gen.get_customers()

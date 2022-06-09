@@ -49,8 +49,7 @@ class CustomersGenerator():
         if female:
             person_list.extend(self.__generate_customers(quantity= quantity if not mixed else int(quantity/2), female= True))
 
-        # Saving to database
-        self.__db_manager.insert_document(person_list)
+        return person_list
         
         
     def __generate_customers(self, quantity=10, female=True) -> list[dict]:

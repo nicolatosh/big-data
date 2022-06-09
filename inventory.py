@@ -1,16 +1,8 @@
 from database_manager import DatabaseManager
-
-
 from retail_items import RetailItems
-
-
 from retail_outlet import RetailBuilder
 
-
-
 class Inventory():
-
-
 
     retail_items = None
 

@@ -91,14 +91,15 @@ class RetailItems:
         self.__db_manager.insert_document(document = [elem for elem in entities.values()])
 
 
-    def get_items(self, limit="") -> list:
+    def get_items(self, limit=0) -> list:
         '''
         Retuns the items/goods sold by retails
         '''
         res = self.__db_manager.execute_query([{},{ "_id": 0,}])
-        res = list(res.limit(limit if limit else 0))
-        if len(res) == 0:
+        res_copy = list(res)
+        if len(res_copy) == 0:
            return []
-        return res
+        return res_copy[:limit]
+        #return res
         
         

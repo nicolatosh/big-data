@@ -91,14 +91,15 @@ class RetailItems:
         self.__db_manager.insert_document(document = [elem for elem in entities.values()])
 
 
-    def get_items(self, limit=0) -> list:
+    def get_items(self, limit="") -> list:
         '''
         Retuns the items/goods that can be sold by retails
-        - limit: how many items to retrieve
+        - limit: how many items to retrieve. Default you get all items 
         '''
         res = self.__db_manager.execute_query([{},{ "_id": 0,}])
         res_copy = list(res)
         if len(res_copy) == 0:
            return []
-        return res
+        return res_copy[:limit] if limit else res_copy
+        
         

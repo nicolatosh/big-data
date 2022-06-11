@@ -1,6 +1,7 @@
 from database_manager import DatabaseManager
 from retail_items import RetailItems
 from retail_outlet import RetailBuilder
+from random import randint
 
 class Inventory():
 
@@ -44,7 +45,7 @@ class Inventory():
         for category in categories:
 
 
-            self.category_intervals[category] = minmax_per_category[category]
+            self.category_intervals[category] = self.minmax_per_category[category]
 
 
         print(categories)
@@ -89,10 +90,8 @@ class Inventory():
 
 
 
-inventory = Inventory()
-
-
-print(inventory.create_inventory())
+#inventory = Inventory()
+#print(inventory.create_inventory())
     
 
 

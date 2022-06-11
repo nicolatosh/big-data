@@ -1,3 +1,4 @@
+from customer_kafka_producer import CustomerProducer
 from retail_items import RetailItems
 from retail_outlet import RetailBuilder
 from customers_generator import CustomersGenerator
@@ -34,10 +35,36 @@ if __name__ == "__main__":
     # Generating inventories
     inventory_builder = RetailInventory()
     inventory_builder.build_inventories(retails)
-    inventories = inventory_builder.get_inventories()
+    inventories = list(inventory_builder.get_inventories())
     simple_printer(inventories, "inventories")
 
-    # Generating customers
-    customers_gen = CustomersGenerator()
-    customers = customers_gen.get_customers()
-    simple_printer(customers, "customers")
+   
+
+    # Starting simulation of transactions
+    bootstrap_servers = ['localhost:29092', 'localhost:39092']
+    topics = []
+    producers = []
+    for i, retail in enumerate(retails):
+        topic = f"{selected_city}.{retail['id']}"
+        topics.append(topic)
+
+        # Generating customers for each city-shop
+        customers_gen = CustomersGenerator()
+        customers = customers_gen.get_customers()
+        #simple_printer(customers, "customers")
+        producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
+
+    for p in producers:
+        p.create_producers_threads(2)  
+     
+
+
+    """
+    per ogni città:
+    - generare shop
+    - generare clienti
+    - prendere un gruppo random di clienti della città secondo una distribuzione
+    - ogni cliente prende random oggeti da quello shop (configurabile)
+    - esecuzione transazione e.g send al topic shop-città  
+    """
+

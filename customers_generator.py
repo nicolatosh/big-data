@@ -1,8 +1,36 @@
-
-from random import randint
+from __future__ import annotations
+from matplotlib.style import use
 from database_manager import DatabaseManager
 from colorama import init as colorama_init, Fore, Style
+from random import randint
 import uuid
+
+class Customer():
+    """
+    Class of a customer
+    """
+
+    def __init__(self, client_id:str, name:str, surname:str, fidaty_card:str) -> None:
+        self.client_id = client_id
+        self.name = name
+        self.surname = surname
+        self.fidaty_card = fidaty_card
+    
+    @staticmethod
+    def from_repr(user:dict) -> Customer:
+        return Customer(user['client_id'], user['name'], user['surname'], user['fidaty_card'])
+
+    @staticmethod
+    def to_repr(user:Customer) -> dict:
+        person = {
+                    'client_id': user.client_id,
+                    'name': user.name, 
+                    'surname': user.surname,
+                    'fidaty_card': user.fidaty_card
+                }
+        return person
+
+        
 
 class CustomersGenerator():
 
@@ -26,10 +54,10 @@ class CustomersGenerator():
             customers = self.generate(default_customers)
 
             # Saving customers to database
-            self.__db_manager.insert_document(customers)
+            self.__db_manager.insert_document([Customer.to_repr(x) for x in customers])
         
 
-    def generate(self, quantity=10, male=True, female=True) -> list[dict]:
+    def generate(self, quantity=10, male=True, female=True) -> list[Customer]:
         """
         Generates random customers e.g Mario Rossi etc. and extends the customer's database collection
         """        
@@ -52,7 +80,7 @@ class CustomersGenerator():
         return person_list
         
         
-    def __generate_customers(self, quantity=10, female=True) -> list[dict]:
+    def __generate_customers(self, quantity=10, female=True) -> list[Customer]:
         
         names_len = None
         surnames_len = len(self.surnames) - 1
@@ -72,13 +100,13 @@ class CustomersGenerator():
                     'surname': self.surnames[_surname],
                     'fidaty_card': str(randint(0,1) > 0)
                 }
-            persons.append(p)
+            persons.append(Customer.from_repr(user=p))
         return persons
 
 
-    def get_customers(self, limit="") -> list:
+    def get_customers(self, limit="") -> list[dict]:
         '''
-        Retuns the customers 
+        Retuns the customers from database as Jsons
         '''
         res = self.__db_manager.execute_query([{},{ "_id": 0,}])
         res = list(res.limit(limit if limit else 0))

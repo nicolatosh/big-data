@@ -1,3 +1,4 @@
+from random import randrange
 import re, os, json
 from database_manager import DatabaseManager
 from colorama import Fore, Style
@@ -87,6 +88,10 @@ class RetailItems:
             print(list(parsed_entities.items())[:1])
             entities.update(parsed_entities)
         
+        # Adding an universal product code
+        for i, entity in enumerate(entities.values()):
+            barcode = "".join([str(x) for x in [randrange(0,9) for x in range(12)]])
+            entity['upc'] = f"{i}-{barcode}"
         # Saving to database
         self.__db_manager.insert_document(document = [elem for elem in entities.values()])
 

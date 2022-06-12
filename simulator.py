@@ -1,9 +1,16 @@
+from subprocess import CREATE_NEW_CONSOLE, Popen
+from sys import executable
+
+from colorama import Fore, Style
+from colorama import init as colorama_init
+
 from customer_kafka_producer import CustomerProducer
-from retail_items import RetailItems
-from retail_outlet import RetailBuilder
 from customers_generator import CustomersGenerator
 from retail_inventory import RetailInventory
-from colorama import init as colorama_init, Fore, Style
+from retail_items import RetailItems
+from retail_kafka_consumer import RetailConsumer
+from retail_outlet import RetailBuilder
+
 
 def simple_printer(collection:list, item_name:str):
     print(Fore.GREEN + f"\nAvailable {item_name}:\n" + Style.RESET_ALL)
@@ -41,6 +48,7 @@ if __name__ == "__main__":
    
 
     # Starting simulation of transactions
+    print(Fore.GREEN + "=== STARTING PRODUCERS ===" + Style.RESET_ALL)
     bootstrap_servers = ['localhost:29092', 'localhost:39092']
     topics = []
     producers = []
@@ -54,9 +62,23 @@ if __name__ == "__main__":
         #simple_printer(customers, "customers")
         producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
 
+    producers_threads = []
     for p in producers:
-        p.create_producers_threads(2)  
-     
+        _threads = p.create_producers_threads(2)  
+        producers_threads.extend(_threads)
+    
+    # Starting consumers
+    for i, topic in enumerate(topics):
+        group = f"{selected_city}.{i}"
+        Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
+        #process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
+        
+        
+
+    # Waiting for producers stream to end
+    for t in producers_threads:
+        if t is not None and t.is_alive():
+             t.join()
 
 
     """

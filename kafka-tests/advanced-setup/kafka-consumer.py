@@ -1,9 +1,6 @@
-from ast import arg
-from pprint import pp
 from kafka import KafkaConsumer
 from json import loads as json_loads
-from multiprocessing import Pool, pool
-import signal
+from multiprocessing import Pool
 
 def start_consumer(foobar):
     """

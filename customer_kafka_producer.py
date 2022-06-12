@@ -1,14 +1,15 @@
 import datetime
-from enum import Enum, IntEnum
-from time import sleep
-from uuid import uuid4
-from kafka import KafkaProducer, KafkaAdminClient
-from kafka.errors import KafkaError, InvalidPartitionsError, TopicAlreadyExistsError
-from kafka.admin import NewPartitions, NewTopic
-from threading import Thread
-from random import randint, randrange, sample
 import json
 import signal
+from enum import Enum, IntEnum
+from random import randrange, sample
+from threading import Thread
+from time import sleep
+from uuid import uuid4
+
+from kafka import KafkaAdminClient, KafkaProducer
+from kafka.admin import  NewTopic
+from kafka.errors import TopicAlreadyExistsError
 
 from customers_generator import Customer
 
@@ -38,7 +39,7 @@ class CustomerProducer():
         - items: items sold by the shop
         """
         class topic_settings(IntEnum):
-            PARTITIONS = 1
+            PARTITIONS = 2
             REPLICATION_FACTOR = 1
 
         self.__servers = servers
@@ -73,17 +74,22 @@ class CustomerProducer():
     def create_transaction(self, num_items_to_buy=5, customer="") -> dict:
         """
         Generating a mock of a transaction to be later sent
-        - customer: Customer
+        - num_items_to_buy: How many different items a customer should buy.\n
+          Note: Each item quantity is random
+        - customer: Customer. If not specified, a random Customer is chosen
         """
         if num_items_to_buy <= 0:
             return {}
         
         if not customer:
             customer = self.__customer_list[randrange(0, len(self.__customer_list))]
-            print(customer)
         transaction = {'txn_id': str(uuid4()), 'date': datetime.datetime.now().isoformat(), 'client_id': customer['client_id']}
         items_to_buy = sample(self.__items, num_items_to_buy)
-        # Add item and quantity
+        
+        # Adding additional info to transaction:
+        # 1. Random items
+        # 2. Quantities per item
+        # 3. Total cost
         keys_to_keep = ['upc', 'description', 'price']
 
         # TODO remove the parser
@@ -91,20 +97,17 @@ class CustomerProducer():
             return {k: item[k] for k in keys_to_keep}
         items_to_buy = list(map(__parser, items_to_buy))
         for item in items_to_buy:
-            print(item)
             item['quantity'] = randrange(1,3)
         transaction['shopping_list'] = items_to_buy
         transaction['total_cost'] = sum([x['quantity']*x['price'] for x in items_to_buy])
         return transaction
 
-    def send_transaction(self, transaction: dict) -> None:
+    def send_transaction(self, transaction: dict, thread_id:int) -> None:
         """
         Sends data to the brokers. Data is a transaction
         """
         def __on_send_success(record_metadata):
-            print(record_metadata.topic)
-            print(record_metadata.partition)
-            print(record_metadata.offset)
+            print(f"Thread [{thread_id}]: [topic: {record_metadata.topic} partition: {record_metadata.partition} offset: {record_metadata.offset}]")
 
         def __on_send_error(excp):
             print('I am an errback', exc_info=excp)
@@ -116,7 +119,7 @@ class CustomerProducer():
         # block until all async messages are sent
         self.__producer.flush()
 
-    def __activate_transaction_stream(self, update_interval=Settings.MINUTES):
+    def __activate_transaction_stream(self, thread_id:int, update_interval=Settings.MINUTES):
         """
         Stream of transactions are sent to the configured retail
         by the customer
@@ -125,10 +128,10 @@ class CustomerProducer():
         while self.__condition:
 
             txn = self.create_transaction()
-            self.send_transaction(txn)
+            self.send_transaction(txn, thread_id)
             sleep(1)
     
-    def create_producers_threads(self, quantity=10):
+    def create_producers_threads(self, quantity=10) -> list[Thread]:
         """
         Produces shares the same KafkaProducer instance. Different threads
         can be spawned to send messages.
@@ -137,19 +140,15 @@ class CustomerProducer():
         # create and start "quantiy" threads
         threads = []
         for n in range(1, quantity + 1):
-            t = Thread(target=self.__activate_transaction_stream, args=())
+            t = Thread(target=self.__activate_transaction_stream, args=(n,), daemon=True)
             threads.append(t)
-            t.daemon = True
             t.start()
 
         # wait for the threads to complete
-        threads = [t.join() for t in threads if t is not None and t.is_alive()] 
-    
+        # threads = [t.join() for t in threads if t is not None and t.is_alive()] 
+        return threads
 
-# Driver code
-if __name__ == "__main__":
-
-    # CTRL-C management
-    signal.signal(signal.SIGTERM, signal.SIG_DFL)
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+# CTRL-C management
+signal.signal(signal.SIGTERM, signal.SIG_DFL)
+signal.signal(signal.SIGINT, signal.SIG_DFL)
  

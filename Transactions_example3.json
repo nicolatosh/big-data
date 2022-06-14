@@ -1,0 +1,23 @@
+[ {
+  "client_id": "b3667dab-fead-4386-82cc-f83c45ea68e2",
+  "name": "giulia",
+  "surname": "bianchi",
+  "fidaty_card": "True",
+  "products_list": {
+    "upc": "2078-878573272326",
+    "description": "Rizzoli, filetti di sgombro piccanti 90 g",
+    "price": 2.29
+    }
+  },
+  {
+  "client_id":"1422cc9e-5c31-4360-a264-f52150abbeb3",
+  "name":"mario",
+  "surname":"foscolo",
+  "fidaty_card":"True",
+  "product_list": {
+    "upc": "2529-338608111118",
+    "description": "Taylors of Harrogate, Green Tea with Jasmine 20 filtri 40 g",
+    "price": "3.79"
+    }
+  }
+]

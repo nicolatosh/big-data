@@ -1,5 +1,6 @@
-from subprocess import CREATE_NEW_CONSOLE, Popen
+from subprocess import CREATE_NEW_CONSOLE, PIPE, Popen
 from sys import executable
+from black import err
 
 from colorama import Fore, Style
 from colorama import init as colorama_init
@@ -8,8 +9,8 @@ from customer_kafka_producer import CustomerProducer
 from customers_generator import CustomersGenerator
 from retail_inventory import RetailInventory
 from retail_items import RetailItems
-from retail_kafka_consumer import RetailConsumer
 from retail_outlet import RetailBuilder
+
 
 
 def simple_printer(collection:list, item_name:str):
@@ -70,11 +71,15 @@ if __name__ == "__main__":
     # Starting consumers
     for i, topic in enumerate(topics):
         group = f"{selected_city}.{i}"
-        Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
+        
+        p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
+        #p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE, stdout=PIPE ,stderr=PIPE, close_fds=True)
         #process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
+        # error = p.stderr.read()
+        # out = p.stdout.read()
+        # print(Fore.GREEN + str(out) + str(error)  + Style.RESET_ALL)
         
         
-
     # Waiting for producers stream to end
     for t in producers_threads:
         if t is not None and t.is_alive():

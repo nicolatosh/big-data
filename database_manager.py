@@ -8,8 +8,8 @@ class DatabaseManager:
     and select the proper collection to operate with
     '''
 
-    def __init__(self, user="admin", password="password", port="27017") -> None:
-        self.__myclient = pymongo.MongoClient(f"mongodb://{user}:{password}@127.0.0.1:{port}/")
+    def __init__(self, user="root", password="password123", port="27017", ) -> None:
+        self.__myclient = pymongo.MongoClient(f"mongodb://{user}:{password}@127.0.0.1:{port}/", maxPoolSize=10000)
 
     def connect_to_database(self, collection_name:str ,database_name="default"):
         self.__database = self.__myclient[database_name]
@@ -51,4 +51,4 @@ class DatabaseManager:
             "$inc" can increase/decrease values
         """
         res = self.__collection.update_one(query, newvalues)
-        print(res)
+        return res

@@ -1,4 +1,4 @@
-from subprocess import CREATE_NEW_CONSOLE, PIPE, Popen
+from subprocess import CREATE_NEW_CONSOLE, PIPE, Popen, call
 from sys import executable
 from black import err
 
@@ -73,13 +73,17 @@ if __name__ == "__main__":
         group = f"{selected_city}.{i}"
         
         p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
-        #p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE, stdout=PIPE ,stderr=PIPE, close_fds=True)
-        #process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
+        # p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE, stdout=PIPE ,stderr=PIPE, close_fds=True)
+        # process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
         # error = p.stderr.read()
         # out = p.stdout.read()
         # print(Fore.GREEN + str(out) + str(error)  + Style.RESET_ALL)
         
-        
+    # Starting batch transaction manager
+    # txn_manager = call([executable, "batch_transactions_manager.py", "--s", *bootstrap_servers, "--c", "transactions_group", "--t", topics])
+    txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags=CREATE_NEW_CONSOLE)
+
+
     # Waiting for producers stream to end
     for t in producers_threads:
         if t is not None and t.is_alive():

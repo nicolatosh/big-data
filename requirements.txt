@@ -2,3 +2,4 @@ colorama
 pytest
 pymongo
 kafka-python
+redis

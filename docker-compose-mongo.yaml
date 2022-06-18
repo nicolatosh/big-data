@@ -1,5 +1,6 @@
 version: '2'
 
+# Mongo default user is "root"
 services:
   mongodb-sharded:
     image: docker.io/bitnami/mongodb-sharded:5.0

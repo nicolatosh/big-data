@@ -3,21 +3,48 @@
   "name": "giulia",
   "surname": "bianchi",
   "fidaty_card": "True",
-  "products_list": {
+  "products_list": [{
     "upc": "2078-878573272326",
     "description": "Rizzoli, filetti di sgombro piccanti 90 g",
-    "price": 2.29
-    }
+    "price": 2.29,
+    "quantity": 2
+    },
+    {
+    "upc": "2568-745573272456",
+    "description": "Barilla, mezze penne rigate 500 g",
+    "price": 0.85,
+    "quantity": 3
+    },
+    {
+    "upc": "2078-878573272326",
+    "description": "Rizzoli, filetti di sgombro piccanti 90 g",
+    "price": 2.29,
+    "quantity": 2
+    }]
   },
   {
   "client_id":"1422cc9e-5c31-4360-a264-f52150abbeb3",
   "name":"mario",
   "surname":"foscolo",
   "fidaty_card":"True",
-  "product_list": {
+  "products_list": [{
     "upc": "2529-338608111118",
     "description": "Taylors of Harrogate, Green Tea with Jasmine 20 filtri 40 g",
-    "price": "3.79"
+    "price": 3.79,
+    "quantity": 3
+    },
+    {
+    "upc": "2529-338608111118",
+    "description": "Taylors of Harrogate, Green Tea with Jasmine 20 filtri 40 g",
+    "price": 3.79,
+    "quantity": 4
+    },
+    {
+    "upc": "2568-745573272456",
+    "description": "Barilla, mezze penne rigate 500 g",
+    "price": 0.85,
+    "quantity": 5
     }
+  ]
   }
 ]

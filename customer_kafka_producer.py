@@ -46,7 +46,7 @@ class CustomerProducer():
         self.__topic = topic
         self.__items = items
         self.__customer_list = customer
-        self.__admin =  KafkaAdminClient(bootstrap_servers=servers)
+        self.__admin =  KafkaAdminClient(bootstrap_servers=servers, security_protocol="PLAINTEXT")
         self.create_topic(topic, int(topic_settings.PARTITIONS), int(topic_settings.REPLICATION_FACTOR))
         self.create_producer()
 

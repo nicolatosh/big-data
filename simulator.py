@@ -11,6 +11,7 @@ from customers_generator import CustomersGenerator
 from retail_inventory import RetailInventory
 from retail_items import RetailItems
 from retail_outlet import RetailBuilder
+from turnout_function import TurnoutFunction
 
 
 
@@ -53,7 +54,7 @@ if __name__ == "__main__":
     print(Fore.GREEN + "=== STARTING PRODUCERS ===" + Style.RESET_ALL)
     bootstrap_servers = ['localhost:29092', 'localhost:39092']
     topics = []
-    producers = []
+    producers = [] 
     for i, retail in enumerate(retails):
         topic = f"{selected_city}.{retail['id']}"
         topics.append(topic)
@@ -65,8 +66,10 @@ if __name__ == "__main__":
         producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
 
     producers_threads = []
+    turnout = TurnoutFunction()
     for p in producers:
-        _threads = p.create_producers_threads(2)  
+        # Sarting producers e.g customers
+        _threads = p.create_producers_threads(turnout.get_affluence(), 100, 2)  
         producers_threads.extend(_threads)
     
     # Starting consumers
@@ -74,11 +77,7 @@ if __name__ == "__main__":
         group = f"{selected_city}.{i}"
         
         p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
-        # p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE, stdout=PIPE ,stderr=PIPE, close_fds=True)
         # process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
-        # error = p.stderr.read()
-        # out = p.stdout.read()
-        # print(Fore.GREEN + str(out) + str(error)  + Style.RESET_ALL)
         
     # Starting batch transaction manager
     # txn_manager = call([executable, "batch_transactions_manager.py", "--s", *bootstrap_servers, "--c", "transactions_group", "--t", topics])
@@ -90,7 +89,8 @@ if __name__ == "__main__":
         if t is not None and t.is_alive():
              t.join()
 
-
+    # At this point simulation ended
+    
     """
     per ogni città:
     - generare shop

@@ -111,7 +111,7 @@ def create_consumers(servers:list, consumer_group:str, topic:str, processes=2):
     try:
         iterable = [x for x in range(processes)]
         res = pool.map_async(consumer_helper, iterable=zip(iterable, servers, repeat(consumer_group), repeat(topic)))
-        res.get(60) # Without the timeout this blocking call ignores all signals.
+        #res.get(60) # Without the timeout this blocking call ignores all signals.
     except KeyboardInterrupt:
         print("Caught KeyboardInterrupt, terminating workers")
         pool.terminate()

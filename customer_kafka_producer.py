@@ -4,7 +4,7 @@ import signal
 from enum import Enum, IntEnum
 from random import randrange, sample
 from threading import Thread
-from time import sleep
+from time import sleep, time
 from uuid import uuid4
 
 from kafka import KafkaAdminClient, KafkaProducer
@@ -12,7 +12,7 @@ from kafka.admin import  NewTopic
 from kafka.errors import TopicAlreadyExistsError
 
 from customers_generator import Customer
-
+from time import time
 
 class CustomerProducer():
 
@@ -92,14 +92,13 @@ class CustomerProducer():
         # 3. Total cost
         keys_to_keep = ['upc', 'description', 'price']
 
-        # TODO remove the parser
         def __parser(item):
             return {k: item[k] for k in keys_to_keep}
         items_to_buy = list(map(__parser, items_to_buy))
         for item in items_to_buy:
             item['quantity'] = randrange(1,3)
         transaction['shopping_list'] = items_to_buy
-        transaction['total_cost'] = sum([x['quantity']*x['price'] for x in items_to_buy])
+        transaction['total_cost'] = round(sum([x['quantity']*x['price'] for x in items_to_buy]), 2)
         return transaction
 
     def send_transaction(self, transaction: dict, thread_id:int) -> None:
@@ -119,28 +118,42 @@ class CustomerProducer():
         # block until all async messages are sent
         self.__producer.flush()
 
-    def __activate_transaction_stream(self, thread_id:int, update_interval=Settings.MINUTES):
+    def __activate_transaction_stream(self, thread_id:int, sleep_time:int, simulation_time:int):
         """
         Stream of transactions are sent to the configured retail
         by the customer
         """
+        start_time = time()
 
         while self.__condition:
 
             txn = self.create_transaction()
             self.send_transaction(txn, thread_id)
-            sleep(1)
+            sleep(sleep_time)
+            # Check end of simulation
+            if ((time() - start_time) >= simulation_time):
+                return
     
-    def create_producers_threads(self, quantity=10) -> list[Thread]:
+    def create_producers_threads(self, turnout:list, simulation_time:int = 60*60*12, quantity:int = 10) -> list[Thread]:
         """
         Produces shares the same KafkaProducer instance. Different threads
         can be spawned to send messages.
+        - turnout: list with affluence values
+        - simulation_time: total simulation time in seconds, default is 12h [8->20]
+        - quantity: how many threads
         """
+        # calculating frequency of txn to be sent in order to reach the turnout
+        sleep_timings = []
+        print(turnout)
+        for tval in turnout:
+            sleep_time = round(tval/quantity, 5) / 60 # in seconds
+            sleep_timings.append(sleep_time)
+
         assert quantity >= 1
         # create and start "quantiy" threads
         threads = []
         for n in range(1, quantity + 1):
-            t = Thread(target=self.__activate_transaction_stream, args=(n,), daemon=True)
+            t = Thread(target=self.__activate_transaction_stream, args=(n, sleep_timings[n], simulation_time), daemon=True)
             threads.append(t)
             t.start()
 

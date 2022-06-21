@@ -5,6 +5,11 @@ from redis_manager import RedisManager
 import argparse
 from json import dumps as json_dump, loads as json_loads
 
+"""
+This script should be used to fetch valid transaction from kafka broker\n
+and append them in a persistent storage for later usage/analysis. In particular\n
+Redis db is used.
+"""
 
 def create_consumer(servers: list, topics:list, consumer_group="transactions-group") -> None:
     """
@@ -40,6 +45,9 @@ def create_consumer(servers: list, topics:list, consumer_group="transactions-gro
         return
 
 def process_transaction(db_manager: Redis, txn, list_name="transactions") -> int:
+    """
+    Push transactions in the collection (list)
+    """
     txn = txn.value
     print(Fore.CYAN + f"pushing {txn['txn_id']}" + Style.RESET_ALL)
     value =  json_dump(txn)

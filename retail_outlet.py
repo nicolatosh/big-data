@@ -3,6 +3,7 @@ import re
 from requests import get
 from colorama import Fore, Style
 from database_manager import DatabaseManager
+from uuid import uuid4
 
 API_RETAILS = 'https://www.punti-vendita.com/esselunga{}.htm'
 ONLINE_MODE = False
@@ -84,7 +85,6 @@ class RetailBuilder:
             if ONLINE_MODE:
                 page = get(self.__available_retails_cities[city])
                 data = page.text
-                print(data)
             else:
                 # Offline mode: data is taken from dump of online pages         
                 try:
@@ -103,7 +103,7 @@ class RetailBuilder:
             retails = []
             # From regex tuples create the retail element
             for elem in [(match[i:i+3]) for i in range(0, len(match), 3)]:
-                retail = {"name": elem[0][0], "address": elem[1][1], "phone": elem[2][2]}
+                retail = {"id": str(uuid4()), "name": elem[0][0], "address": elem[1][1], "phone": elem[2][2]}
                 retails.append(retail)
             
             # Saving into database
@@ -129,11 +129,11 @@ class RetailBuilder:
         self.__manager.select_collection(self.database_collections_names['retails'])
         res = []
         if city:
-            res = list(self.__manager.execute_query([{"city" : city},{ "_id": 0,}]))
+            res = list(self.__manager.execute_query([{"city" : city}]))
         else:
-            res = list(self.__manager.execute_query([{},{ "_id": 0,}]))
+            res = list(self.__manager.execute_query([{},{"_id": 0}]))
         if len(res) == 0:
             print(Fore.YELLOW + f'No retails found in the city [{city}]' + Style.RESET_ALL)
             return []
-        return res[0]['retails']  
+        return res[0]['retails'] 
 

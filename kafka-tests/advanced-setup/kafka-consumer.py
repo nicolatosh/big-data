@@ -1,9 +1,6 @@
-from ast import arg
-from pprint import pp
 from kafka import KafkaConsumer
 from json import loads as json_loads
-from multiprocessing import Pool, pool
-import signal
+from multiprocessing import Pool
 
 def start_consumer(foobar):
     """
@@ -11,7 +8,7 @@ def start_consumer(foobar):
     """
     # To consume latest messages and auto-commit offsets
     try:
-        consumer = KafkaConsumer('test-topic',
+        consumer = KafkaConsumer('como.00832a78-0979-4352-b652-4aa16dce91f7',
                                 group_id='test-group',
                                 bootstrap_servers=['localhost:29092', 'localhost:39092'],
                                 value_deserializer=lambda m: json_loads(m.decode('ascii')))

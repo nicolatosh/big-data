@@ -1,0 +1,33 @@
+version: '2'
+
+# NOTE for container direct connection
+# redis user is "default"
+# use AUTH "default" "redis_password"
+services:
+  redis-master:
+    image: 'bitnami/redis:latest'
+    ports:
+      - '6379:6379'
+    environment:
+      - REDIS_REPLICATION_MODE=master
+      - REDIS_PASSWORD=redis_password
+      - REDIS_AOF_ENABLED=yes
+    volumes:
+    - 'transactions:/bitnami'
+
+  redis-replica:
+    image: 'bitnami/redis:latest'
+    ports:
+      - '6379'
+    depends_on:
+      - redis-master
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis-master
+      - REDIS_MASTER_PORT_NUMBER=6379
+      - REDIS_MASTER_PASSWORD=redis_password
+      - REDIS_PASSWORD=redis_password
+
+volumes:
+  transactions:
+    driver: local

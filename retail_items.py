@@ -1,15 +1,16 @@
+from random import randrange
 import re, os, json
 from database_manager import DatabaseManager
 from colorama import Fore, Style
 
 class RetailItems:
 
-    __database_name = "retails"
-    __collection = "retails_items"
+    database_name = "retails"
+    collection_name = "retails_items"
 
     def __init__(self):
         self.__db_manager = DatabaseManager()
-        self.__db_manager.connect_to_database(database_name=self.__database_name, collection_name=self.__collection)
+        self.__db_manager.connect_to_database(database_name=self.database_name, collection_name=self.collection_name)
 
     def __label_to_price_per_kg(self, label):
         '''
@@ -77,7 +78,7 @@ class RetailItems:
         # Check for items already present
         res = list(self.__db_manager.execute_query([{}]))
         if len(res) != 0:
-            print(Fore.YELLOW + f'Info: items are already present in collection [{self.__collection}]' + Style.RESET_ALL)
+            print(Fore.YELLOW + f'Info: items are already present in collection [{self.collection_name}]' + Style.RESET_ALL)
             return
 
         # Records creation
@@ -87,19 +88,23 @@ class RetailItems:
             print(list(parsed_entities.items())[:1])
             entities.update(parsed_entities)
         
+        # Adding an universal product code
+        for i, entity in enumerate(entities.values()):
+            barcode = "".join([str(x) for x in [randrange(0,9) for x in range(12)]])
+            entity['upc'] = f"{i}-{barcode}"
         # Saving to database
         self.__db_manager.insert_document(document = [elem for elem in entities.values()])
 
 
-    def get_items(self, limit=0) -> list:
+    def get_items(self, limit="") -> list:
         '''
-        Retuns the items/goods sold by retails
+        Retuns the items/goods that can be sold by retails
+        - limit: how many items to retrieve. Default you get all items 
         '''
         res = self.__db_manager.execute_query([{},{ "_id": 0,}])
         res_copy = list(res)
         if len(res_copy) == 0:
            return []
-        return res_copy[:limit]
-        #return res
+        return res_copy[:limit] if limit else res_copy
         
         

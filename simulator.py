@@ -1,9 +1,18 @@
+from subprocess import CREATE_NEW_CONSOLE, PIPE, Popen, call
+from sys import executable
+
+
+from colorama import Fore, Style
+from colorama import init as colorama_init
+
 from customer_kafka_producer import CustomerProducer
-from retail_items import RetailItems
-from retail_outlet import RetailBuilder
 from customers_generator import CustomersGenerator
 from retail_inventory import RetailInventory
-from colorama import init as colorama_init, Fore, Style
+from retail_items import RetailItems
+from retail_outlet import RetailBuilder
+from turnout_function import TurnoutFunction
+
+
 
 def simple_printer(collection:list, item_name:str):
     print(Fore.GREEN + f"\nAvailable {item_name}:\n" + Style.RESET_ALL)
@@ -36,14 +45,15 @@ if __name__ == "__main__":
     inventory_builder = RetailInventory()
     inventory_builder.build_inventories(retails)
     inventories = list(inventory_builder.get_inventories())
+    inventory_builder.set_quantity()
     simple_printer(inventories, "inventories")
 
    
-
     # Starting simulation of transactions
+    print(Fore.GREEN + "=== STARTING PRODUCERS ===" + Style.RESET_ALL)
     bootstrap_servers = ['localhost:29092', 'localhost:39092']
     topics = []
-    producers = []
+    producers = [] 
     for i, retail in enumerate(retails):
         topic = f"{selected_city}.{retail['id']}"
         topics.append(topic)
@@ -54,11 +64,32 @@ if __name__ == "__main__":
         #simple_printer(customers, "customers")
         producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
 
+    producers_threads = []
+    turnout = TurnoutFunction()
     for p in producers:
-        p.create_producers_threads(2)  
-     
+        # Sarting producers e.g customers
+        _threads = p.create_producers_threads(turnout.get_affluence(), 100, 2)  
+        producers_threads.extend(_threads)
+    
+    # Starting consumers
+    for i, topic in enumerate(topics):
+        group = f"{selected_city}.{i}"
+        
+        p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
+        # process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
+        
+    # Starting batch transaction manager
+    # txn_manager = call([executable, "batch_transactions_manager.py", "--s", *bootstrap_servers, "--c", "transactions_group", "--t", topics])
+    txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags=CREATE_NEW_CONSOLE)
 
 
+    # Waiting for producers stream to end
+    for t in producers_threads:
+        if t is not None and t.is_alive():
+             t.join()
+
+    # At this point simulation ended
+    
     """
     per ogni città:
     - generare shop

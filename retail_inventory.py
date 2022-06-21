@@ -1,7 +1,6 @@
-from dataclasses import dataclass
+from colorama import Fore, Style
 from database_manager import DatabaseManager
 from inventory import Inventory
-
 
 class RetailInventory():
 
@@ -49,3 +48,28 @@ class RetailInventory():
         if retail_id:
             return self.__manager.execute_query([{"retailId": retail_id},{"_id": 0}])
         return self.__manager.execute_query([{}, {"_id": 0}])
+
+    def set_quantity(self, retail_id: int = "", item_upc: str ="", quantity: int = 100):
+        """
+        Allows to update items stock level in inventories
+        - retail_id: specific retail to update, default is all
+        - item_upc: update specific item, default is all
+        - quantity: stock level to add
+        """
+        # Empty inventories check
+        res = self.__manager.execute_query([{},{ "_id": 0}])
+        if len(list(res)) == 0:
+            return 
+        
+        res = None
+        if retail_id and item_upc:
+            args = [{"retailId": retail_id, "inventory.upc": item_upc}, {"$inc": {"inventory.$.stock_level": quantity}}]
+            res = self.__manager.update(*args)
+            print("RES1", res)
+        else:
+            args = [{}, {"$inc": {"inventory.$[].stock_level": quantity}}]
+            res = self.__manager.update_many(*args)
+        if (not(res.acknowledged) or(not res.matched_count) or (not res.modified_count)):
+            print(Fore.YELLOW + "Retail inventory error:" + Style.RESET_ALL + " failed to update item quantity")
+            return False
+        return True

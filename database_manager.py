@@ -45,10 +45,25 @@ class DatabaseManager:
 
         """
         Usage example:
-            - myquery = { "address": "Valley 345" }
-            - newvalues = { "$set": { "address": "Canyon 123" } }
+            - query = { "address": "Valley 345" }
+            - newvalues = { "$set": { "address": "Canyon 123" }}\n
 
             "$inc" can increase/decrease values
         """
         res = self.__collection.update_one(query, newvalues)
         return res
+    
+    def update_many(self, query, newvalues):
+        """
+        Usage example:
+            - query = { }
+            - newvalues = { "$inc": { "money.$[]": 100 }}\n
+
+            "$inc" can increase/decrease values\n
+            This allows for updating many documents matching the query
+        """
+        res = self.__collection.update_many(query, newvalues)
+        return res
+
+    def get_client(self):
+        return self.__myclient

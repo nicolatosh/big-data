@@ -17,10 +17,15 @@ def create_consumer(servers: list, topics:list, consumer_group="transactions-gro
     db_manager = RedisManager().get_instance()
     assert db_manager.ping()
 
+    # Updating topics
+    new_topics = []
+    for t in topics:
+       new_topics.append(str(t + ".validtxns")) 
+        
     # Debug print
     print(f"{servers}:{consumer_group}:{topics}")
     try:
-        _consumer = KafkaConsumer(*topics,
+        _consumer = KafkaConsumer(*new_topics,
                             group_id=consumer_group,
                             bootstrap_servers=servers,
                             value_deserializer=lambda m: json_loads(m.decode('ascii')))

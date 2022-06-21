@@ -1,5 +1,6 @@
 from subprocess import CREATE_NEW_CONSOLE, PIPE, Popen, call
 from sys import executable
+from time import sleep
 from black import err
 
 from colorama import Fore, Style
@@ -44,10 +45,10 @@ if __name__ == "__main__":
     inventory_builder = RetailInventory()
     inventory_builder.build_inventories(retails)
     inventories = list(inventory_builder.get_inventories())
+    inventory_builder.set_quantity()
     simple_printer(inventories, "inventories")
 
    
-
     # Starting simulation of transactions
     print(Fore.GREEN + "=== STARTING PRODUCERS ===" + Style.RESET_ALL)
     bootstrap_servers = ['localhost:29092', 'localhost:39092']

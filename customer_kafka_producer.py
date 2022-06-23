@@ -46,7 +46,7 @@ class CustomerProducer():
         self.__topic = topic
         self.__items = items
         self.__customer_list = customer
-        self.__admin =  KafkaAdminClient(bootstrap_servers=servers, security_protocol="PLAINTEXT")
+        self.__admin =  KafkaAdminClient(bootstrap_servers=servers)
         self.create_topic(topic, int(topic_settings.PARTITIONS), int(topic_settings.REPLICATION_FACTOR))
         self.create_producer()
 
@@ -117,6 +117,9 @@ class CustomerProducer():
 
         # block until all async messages are sent
         self.__producer.flush()
+    
+    def stop_stream(self):
+        self.__condition = False
 
     def __activate_transaction_stream(self, thread_id:int, sleep_time:int, simulation_time:int):
         """
@@ -153,15 +156,12 @@ class CustomerProducer():
         # create and start "quantiy" threads
         threads = []
         for n in range(1, quantity + 1):
-            t = Thread(target=self.__activate_transaction_stream, args=(n, sleep_timings[n], simulation_time), daemon=True)
+            t = Thread(target=self.__activate_transaction_stream, args=(n, sleep_timings[n], simulation_time))
+            t.setDaemon(True)
             threads.append(t)
             t.start()
 
-        # wait for the threads to complete
-        # threads = [t.join() for t in threads if t is not None and t.is_alive()] 
         return threads
 
-# CTRL-C management
-signal.signal(signal.SIGTERM, signal.SIG_DFL)
-signal.signal(signal.SIGINT, signal.SIG_DFL)
+
  

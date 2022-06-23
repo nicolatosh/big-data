@@ -1,7 +1,6 @@
 from subprocess import CREATE_NEW_CONSOLE, PIPE, Popen, call
 from sys import executable
 from time import sleep
-from black import err
 
 from colorama import Fore, Style
 from colorama import init as colorama_init
@@ -12,13 +11,32 @@ from retail_inventory import RetailInventory
 from retail_items import RetailItems
 from retail_outlet import RetailBuilder
 from turnout_function import TurnoutFunction
-
+from signal import signal, SIGINT, SIGTERM
+from os import name as os_name, kill as os_kill
 
 
 def simple_printer(collection:list, item_name:str):
     print(Fore.GREEN + f"\nAvailable {item_name}:\n" + Style.RESET_ALL)
     for i, item in enumerate(collection):
         print(f'{i}. {item}' + Style.RESET_ALL)
+
+def ctrlc_manager(signum, frame):
+    print(Fore.GREEN + " \n== Terminating application ==" + Style.RESET_ALL)
+    for p in consumers_processes:
+        if os_name == 'nt':  # windows
+            Popen("TASKKILL /F /PID {pid} /T".format(pid=p.pid))
+        else:
+            os_kill(p.pid, SIGTERM)
+    print(Fore.GREEN + "Consumers stopped" + Style.RESET_ALL)
+    print(Fore.GREEN + " \n== Exiting... ==" + Style.RESET_ALL)
+    exit(0)
+
+# CTRL-C management
+signal(SIGTERM, ctrlc_manager)
+signal(SIGINT, ctrlc_manager)
+
+consumers_processes = []
+producers_threads = []
 
 # Driver code
 if __name__ == "__main__":
@@ -65,7 +83,6 @@ if __name__ == "__main__":
         #simple_printer(customers, "customers")
         producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
 
-    producers_threads = []
     turnout = TurnoutFunction()
     for p in producers:
         # Sarting producers e.g customers
@@ -77,19 +94,19 @@ if __name__ == "__main__":
         group = f"{selected_city}.{i}"
         
         p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
-        # process = subprocess.call([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'])
-        
-    # Starting batch transaction manager
-    # txn_manager = call([executable, "batch_transactions_manager.py", "--s", *bootstrap_servers, "--c", "transactions_group", "--t", topics])
-    txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags=CREATE_NEW_CONSOLE)
+        consumers_processes.append(p)
 
+    # Starting batch transaction manager
+    txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags=CREATE_NEW_CONSOLE)
+    consumers_processes.append(txn_manager)
 
     # Waiting for producers stream to end
     for t in producers_threads:
         if t is not None and t.is_alive():
-             t.join()
+             sleep(10)
 
     # At this point simulation ended
+    # - start batch processing
     
     """
     per ogni città:

@@ -10,7 +10,9 @@ from customers_generator import CustomersGenerator
 from retail_inventory import RetailInventory
 from retail_items import RetailItems
 from retail_outlet import RetailBuilder
+from supply_chain import SupplyChain
 from turnout_function import TurnoutFunction
+from batch_transactions_processor import TxnProcessor
 from signal import signal, SIGINT, SIGTERM
 from os import name as os_name, kill as os_kill
 
@@ -30,6 +32,16 @@ def ctrlc_manager(signum, frame):
     print(Fore.GREEN + "Consumers stopped" + Style.RESET_ALL)
     print(Fore.GREEN + " \n== Exiting... ==" + Style.RESET_ALL)
     exit(0)
+
+def end_simulation():
+    print(Fore.CYAN + " \n== Ending simulation ==" + Style.RESET_ALL)
+    for p in consumers_processes:
+        if os_name == 'nt':  # windows
+            Popen("TASKKILL /F /PID {pid} /T".format(pid=p.pid))
+        else:
+            os_kill(p.pid, SIGTERM)
+    print(Fore.CYAN + "Consumers stopped" + Style.RESET_ALL)
+    
 
 # CTRL-C management
 signal(SIGTERM, ctrlc_manager)
@@ -67,46 +79,74 @@ if __name__ == "__main__":
     inventory_builder.set_quantity()
     simple_printer(inventories, "inventories")
 
-   
-    # Starting simulation of transactions
-    print(Fore.GREEN + "=== STARTING PRODUCERS ===" + Style.RESET_ALL)
-    bootstrap_servers = ['localhost:29092', 'localhost:39092']
-    topics = []
-    producers = [] 
-    for i, retail in enumerate(retails):
-        topic = f"{selected_city}.{retail['id']}"
-        topics.append(topic)
+    NUM_DAYS = 5
+    for j in range(NUM_DAYS):
+        print(Fore.BLUE + f"=== SIMULATION DAY {str(j)} START ===" + Style.RESET_ALL)    
 
-        # Generating customers for each city-shop
-        customers_gen = CustomersGenerator()
-        customers = customers_gen.get_customers()
-        #simple_printer(customers, "customers")
-        producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
+        # Starting simulation of transactions
+        print(Fore.GREEN + "=== STARTING PRODUCERS ===" + Style.RESET_ALL)
+        bootstrap_servers = ['localhost:29092', 'localhost:39092']
+        topics = []
+        producers = [] 
+        for i, retail in enumerate(retails):
+            topic = f"{selected_city}.{retail['id']}"
+            topics.append(topic)
 
-    turnout = TurnoutFunction()
-    for p in producers:
-        # Sarting producers e.g customers
-        _threads = p.create_producers_threads(turnout.get_affluence(), 100, 2)  
-        producers_threads.extend(_threads)
-    
-    # Starting consumers
-    for i, topic in enumerate(topics):
-        group = f"{selected_city}.{i}"
+            # Generating customers for each city-shop
+            customers_gen = CustomersGenerator()
+            customers = customers_gen.get_customers()
+            #simple_printer(customers, "customers")
+            producers.append(CustomerProducer(bootstrap_servers, topic, inventories[i]['inventory'] ,customers))
+
+        turnout = TurnoutFunction()
+        for p in producers:
+            # Sarting producers e.g customers
+            _threads = p.create_producers_threads(turnout.get_affluence(), 20, 2)  
+            producers_threads.extend(_threads)
+
+        # Starting consumers
+        for i, topic in enumerate(topics):
+            group = f"{selected_city}.{i}"
+            
+            p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
+            consumers_processes.append(p)
+
+        # Starting batch transaction manager
+        txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags=CREATE_NEW_CONSOLE)
+        consumers_processes.append(txn_manager)
+
+        # Starting supply chain
+        # chain = Popen([executable, "supply_chain.py", "--s", *bootstrap_servers, "--i", "1", "--t", *topics], creationflags=CREATE_NEW_CONSOLE)
+        chain = SupplyChain(1, bootstrap_servers, topics)
+        chain.create_inventory()
+        chain.create_chain_consumers()
+
+        # Waiting for producers stream to end
+        for t in producers_threads:
+            if t is not None and t.is_alive():
+                sleep(10)
+                      
+
+        print(Fore.BLUE + f"=== SIMULATION DAY {str(j)} END ===" + Style.RESET_ALL) 
         
-        p = Popen([executable, "retail_kafka_consumer.py", "--s", *bootstrap_servers, "--c", f'{group}', "--t", f'{topic}'], creationflags=CREATE_NEW_CONSOLE)
-        consumers_processes.append(p)
+        # At this point simulation ended
+        # 1. End simulation by stpping processes/threads
+        # 2. Start batch processing
+        # 3. Execute supply chain update of ROP
+        # 4. Chain check for sending orders to retails
+        
+        batch_processor = TxnProcessor()
+        sales_velocity = batch_processor.calculate_daily_sales()
+        chain.calculate_and_update_rop(sales_velocity)
+        chain.send_orders()
+        sleep(10)
+        #end_simulation()
+        exit()
 
-    # Starting batch transaction manager
-    txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags=CREATE_NEW_CONSOLE)
-    consumers_processes.append(txn_manager)
+        # - start batch processing etc
+        # end_simulation()
 
-    # Waiting for producers stream to end
-    for t in producers_threads:
-        if t is not None and t.is_alive():
-             sleep(10)
 
-    # At this point simulation ended
-    # - start batch processing
     
     """
     per ogni città:

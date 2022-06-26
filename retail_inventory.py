@@ -67,7 +67,7 @@ class RetailInventory():
             res = self.__manager.update(*args)
             print("RES1", res)
         else:
-            args = [{}, {"$inc": {"inventory.$[].stock_level": quantity}}]
+            args = [{}, {"$inc": {"inventory.$[].stock_level": quantity}}, []]
             res = self.__manager.update_many(*args)
         if (not(res.acknowledged) or(not res.matched_count) or (not res.modified_count)):
             print(Fore.YELLOW + "Retail inventory error:" + Style.RESET_ALL + " failed to update item quantity")

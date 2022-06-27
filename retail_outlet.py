@@ -47,7 +47,7 @@ class RetailBuilder:
         # Extracting cities 
         # Regex extracts the available cities stores
         regex = r"\<a href=\"esselunga\-(.*?).htm\">"
-        f = open('esselunga.htm', 'r')
+        f = open('default_data/esselunga.htm', 'r')
         match = re.findall(regex, f.read())
         if not match:
             print(Fore.RED + 'Error: ' + Style.RESET_ALL + "failed to parse retails list")
@@ -85,16 +85,21 @@ class RetailBuilder:
             regex = r"<strong>(.*)</strong>|Mappa.*\n\s+(.*)<br />|Telefono:(.*\d+)"
             data = None
             if ONLINE_MODE:
-                page = get(self.__available_retails_cities[city])
-                data = page.text
+                try:
+                    data = open(f'default_data/esselunga-{city}.htm', 'r')
+                except FileNotFoundError:
+                    page = get(self.__available_retails_cities[city])
+                    data = page.text
+                    f = open(f'default_data/esselunga-{city}.htm', 'w')
+                    f.write(data)
             else:
                 # Offline mode: data is taken from dump of online pages         
                 try:
-                    data = open(f'esselunga-{city}.htm', 'r')
+                    data = open(f'default_data/esselunga-{city}.htm', 'r')
                 except FileNotFoundError:
                     print(Fore.RED + 'Error: ' + Style.RESET_ALL + f"could not retrieve shops for city [{city}]. Using default [como]")
                     city = "como"
-                    data = open(f'esselunga-como.htm', 'r')
+                    data = open(f'default_data/esselunga-como.htm', 'r')
                 data = data.read()
 
             match = re.findall(regex, data)

@@ -19,14 +19,13 @@ class RetailInventory():
         item will have random quantity. Check Inventory script
         for details.
         """
-
-        res = self.__manager.execute_query([{},{ "_id": 0}])
-        if len(list(res)) != 0:
-            return 
-
         retails_with_inventories = []
         print(retails_list)
         for retail in retails_list:
+
+            res = self.__manager.execute_query([{"retailId": retail['id']},{ "_id": 0}])
+            if len(list(res)) != 0:
+                return 
             items = self.__inventory.create_inventory(inventory_size, random_items)
 
             # Shop with all goods
@@ -40,12 +39,12 @@ class RetailInventory():
     
     def get_inventories(self, retail_id=""):
         """
-        Returns all inventories or a single shop iventory
-        - retail_id: string
+        Returns all inventories or some shop iventories
+        - retail_id: list of retail ids
         """
 
         if retail_id:
-            return self.__manager.execute_query([{"retailId": retail_id},{"_id": 0}])
+            return self.__manager.execute_query([{"retailId": {"$in": [x for x in retail_id]}},{"_id": 0}])
         return self.__manager.execute_query([{}, {"_id": 0}])
 
     def set_quantity(self, retail_id: int = "", item_upc: str ="", quantity: int = 100) -> bool:

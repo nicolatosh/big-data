@@ -53,7 +53,7 @@ producers_threads = []
 
 ### -- CONFIGURATION PARAMS -- ###
 INTERACTIVE_MODE = True # False to disable console views
-NUM_TRIALS = 1 # simulation cycles
+NUM_TRIALS = 2 # simulation cycles
 SIMULATION_TRIAL_TOTAL_TIME = 60 #seconds
 CUSTOMERS_PER_CITY = 10 # random persons/consumers
 CUSTOMERS_THREADS = 2
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     # Generating inventories
     inventory_builder = RetailInventory()
     inventory_builder.build_inventories(retails)
-    inventories = list(inventory_builder.get_inventories())
+    inventories = list(inventory_builder.get_inventories([x['id'] for x in retails]))
     inventory_builder.set_quantity()
     simple_printer(inventories, "inventories")
 

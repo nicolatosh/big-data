@@ -1,9 +1,11 @@
 
 import re
-from requests import get
-from colorama import Fore, Style
-from database_manager import DatabaseManager
 from uuid import uuid4
+
+from colorama import Fore, Style
+from requests import get
+
+from database_manager import DatabaseManager
 
 API_RETAILS = 'https://www.punti-vendita.com/esselunga{}.htm'
 ONLINE_MODE = False

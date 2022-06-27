@@ -24,7 +24,13 @@ class TxnProcessor():
         """
         Loads a whole list of transactions
         """
-        return [json_loads(x) for x in  self.__redis_manager.lrange(list_name, 0, -1)]
+        elems = [json_loads(x) for x in  self.__redis_manager.lrange(list_name, 0, -1)]
+        
+        # List can be saved, moved etc...
+        # By now it can be deleted
+        self.__redis_manager.delete(list_name)
+        return elems
+    
         
     
     def calculate_daily_sales(self) -> list:

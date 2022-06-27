@@ -1,6 +1,4 @@
-from database_manager import DatabaseManager
 from retail_items import RetailItems
-from retail_outlet import RetailBuilder
 from random import randint, sample, shuffle
 class Inventory():
 

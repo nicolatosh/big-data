@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import argparse
-from ast import For
 from itertools import repeat
 from json import loads as json_loads, dumps as json_dumps
 from multiprocessing import Pool
+from threading import Thread
 from uuid import uuid4
 
 
@@ -15,8 +15,7 @@ from database_manager import DatabaseManager
 from retail_inventory import RetailInventory
 
 
-def create_orders_consumer(servers:list, consumer_group: str ="orders_default", topic: str = "default-topic"):
-    pass
+
 
 def create_consumer(consumer_id:int, servers: list, consumer_group="default-group", topic: str = "default-topic") -> None:
     """
@@ -60,7 +59,7 @@ def create_consumer(consumer_id:int, servers: list, consumer_group="default-grou
                 _producer.send(valid_txn_topic, value=message.value)
                 _producer.flush()
     except Exception as e:
-        print(e)
+        print(Fore.RED + f"Exception {e}" + Style.RESET_ALL)
         return
 
 def consumer_helper(arg):
@@ -82,7 +81,9 @@ def apply_transaction(txn, db_manager: DatabaseManager, shop_id, orderer:KafkaPr
         with client.start_session() as session:
             with session.start_transaction():
                 for item in items:
-                    res = db_manager.update_many(query={"retailId": shop_id, "inventory.stock_level": {"$gte": item['quantity'] }}, newvalues={"$inc": {"inventory.$[item].stock_level": -item['quantity']}}, filters=[{"item.upc": item['upc']}])
+                    res = db_manager.update({"retailId": shop_id, "inventory": {"$elemMatch": {"upc": item['upc'], "stock_level": {"$gte": item['quantity']}}}}, {"$inc": {"inventory.$.stock_level": -item['quantity']}})
+                    # res2 = db_manager.execute_query([{"retailId": shop_id, "inventory": {"$elemMatch": {"upc": item['upc'], "stock_level": {"$gte": item['quantity']}}}}, {"inventory.$": 1}])
+                    # print(f"RES for upc:{item['upc']} : {list(res2)}")
 
                     if (not(res.acknowledged) or(res.matched_count  != 1) or (res.modified_count != 1)):
                         # This provides for automatic rollback
@@ -94,13 +95,13 @@ def apply_transaction(txn, db_manager: DatabaseManager, shop_id, orderer:KafkaPr
                     res_item = res_item["inventory"][0]
                     print(f"ITEM {res_item}")
                     if ((res_item['stock_level'] < res_item['rop']) and not res_item['in_restock']):
-                        order = {"order_id": uuid4(), "upc": item['upc'], "quantity": res_item['reorder_quantity']}
+                        order = {"order_id": str(uuid4()), "retail_id": shop_id, "upc": item['upc'], "quantity": res_item['reorder_quantity']}
                         # Set restock flag
                         args = [{"retailId": shop_id, "inventory.upc": item['upc']}, {"$set": {"inventory.$.in_restock": True}}]
                         res = db_manager.update(*args)
                         issue_order(orderer, order_topic, order)   
     except Exception as e:
-        print(f"EX {e}")
+        print(Fore.RED + f"Exception {e}" + Style.RESET_ALL)
         return False    
     print(Fore.GREEN +  f"Transaction {txn['txn_id']} done " + Style.RESET_ALL)
     return True
@@ -124,6 +125,10 @@ def create_consumers(servers:list, consumer_group:str, topic:str, processes=2):
     - topic: topic name
     - processes: number of consumers
     """
+
+    t = Thread(target=create_order_receiver, args=(servers, topic))
+    t.setDaemon(True)
+    t.start()
     
     print(Fore.GREEN + "=== Initializng consumer ===" + Style.RESET_ALL)
     pool = Pool(processes)
@@ -163,21 +168,21 @@ def create_order_receiver(servers:list, topic:str, consumer_group:str = "orders-
     # Action to perform per message
     for order in consumer:
         # Apply the order received e.g update the item quantity
-        res = apply_order(order, db_manager)
+        res = apply_order(order.value, db_manager)
         if res:
-            print("order processed")
+            print(Fore.RED + f"Order {order.value['order_id']} processed" + Style.RESET_ALL)
             
 def apply_order(order, db_manager:DatabaseManager):
-    
-    upc = order['upc']
-    args = [{"inventory.upc": upc}, {"$inc": {"inventory.$.stock_level": order['quantity']}}]
-    
     try:
-        res = db_manager.update(*args)
+        res = db_manager.update_many(query={"retailId": order['retail_id']}, newvalues={"$inc": {"inventory.$[item].stock_level": order['quantity']}}, filters=[{"item.upc": order['upc']}])
         if (not(res.acknowledged) or(res.matched_count  != 1) or (res.modified_count != 1)):
             raise Exception(Fore.YELLOW + f"Order {order['order_id']} failed " + Style.RESET_ALL)
+        
+        # Reset restock flag
+        args = [{"retailId": order['retail_id'], "inventory.upc": order['upc']}, {"$set": {"inventory.$.in_restock": False}}]
+        db_manager.update(*args)
     except Exception as e:
-        print(f"Exception: {e}")
+        print(Fore.RED + f"Exception {e}" + Style.RESET_ALL)
         return False
     return True    
 
@@ -191,7 +196,7 @@ def create_order_producer(servers: list) -> KafkaProducer:
                                 value_serializer=lambda m: json_dumps(m).encode('ascii'))
 
 def issue_order(producer:KafkaProducer, topic:str, order):
-    print(Fore.GREEN + "sending order" + Style.RESET_ALL)
+    print(Fore.GREEN + f"Sending order [{order['upc']} {order['quantity']}]" + Style.RESET_ALL)
     producer.send(topic, value=order)
 
 
@@ -199,12 +204,12 @@ if __name__ == "__main__":
     colorama_init()
     db_manager = get_databasemanager()
     parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--s', type=str, nargs='+', dest='servers', help='list of servers <addr>:<port>', required=True)
-    parser.add_argument('--c', type=str , dest='consumer_group', help='consumer group', required=True)
-    parser.add_argument('--t', type=str , dest='topic', help='topic name', required=True)
+    parser.add_argument('-s', type=str, nargs='+', dest='servers', help='list of servers <addr>:<port>', required=True)
+    parser.add_argument('-c', type=str , dest='consumer_group', help='consumer group', required=True)
+    parser.add_argument('-t', type=str , dest='topic', help='topic name', required=True)
+    parser.add_argument('-p', type=int , dest='processes', help='number of processes', required=True)
     args = parser.parse_args()
 
     # Debug print
     print(f"Script called with args: {args}")
-    create_consumers(args.servers, args.consumer_group, args.topic, 2)
-    create_order_receiver(args.servers, args.topic)
+    create_consumers(args.servers, args.consumer_group, args.topic, args.processes)

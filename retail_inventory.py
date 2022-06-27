@@ -35,7 +35,6 @@ class RetailInventory():
                 "inventory": items
             }
             retails_with_inventories.append(retail_with_inventory)
-
         self.__manager.insert_document(retails_with_inventories)
 
     
@@ -49,7 +48,7 @@ class RetailInventory():
             return self.__manager.execute_query([{"retailId": retail_id},{"_id": 0}])
         return self.__manager.execute_query([{}, {"_id": 0}])
 
-    def set_quantity(self, retail_id: int = "", item_upc: str ="", quantity: int = 100):
+    def set_quantity(self, retail_id: int = "", item_upc: str ="", quantity: int = 100) -> bool:
         """
         Allows to update items stock level in inventories
         - retail_id: specific retail to update, default is all
@@ -59,15 +58,14 @@ class RetailInventory():
         # Empty inventories check
         res = self.__manager.execute_query([{},{ "_id": 0}])
         if len(list(res)) == 0:
-            return 
+            return False
         
         res = None
         if retail_id and item_upc:
-            args = [{"retailId": retail_id, "inventory.upc": item_upc}, {"$inc": {"inventory.$.stock_level": quantity}}]
+            args = [{"retailId": retail_id, "inventory.upc": item_upc}, {"$set": {"inventory.$.stock_level": quantity}}]
             res = self.__manager.update(*args)
-            print("RES1", res)
         else:
-            args = [{}, {"$inc": {"inventory.$[].stock_level": quantity}}, []]
+            args = [{}, {"$set": {"inventory.$[].stock_level": quantity}}, []]
             res = self.__manager.update_many(*args)
         if (not(res.acknowledged) or(not res.matched_count) or (not res.modified_count)):
             print(Fore.YELLOW + "Retail inventory error:" + Style.RESET_ALL + " failed to update item quantity")

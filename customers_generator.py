@@ -1,7 +1,6 @@
 from __future__ import annotations
-from matplotlib.style import use
 from database_manager import DatabaseManager
-from colorama import init as colorama_init, Fore, Style
+from colorama import Fore, Style
 from random import randint
 import uuid
 

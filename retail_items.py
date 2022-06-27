@@ -1,7 +1,7 @@
 from random import randrange
 import re, os, json
-from database_manager import DatabaseManager
 from colorama import Fore, Style
+from database_manager import DatabaseManager
 
 class RetailItems:
 

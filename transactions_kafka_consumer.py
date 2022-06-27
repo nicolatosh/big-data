@@ -1,9 +1,13 @@
-from redis import Redis
-from colorama import Fore, Style, init as colorama_init
-from kafka import KafkaConsumer
-from redis_manager import RedisManager
 import argparse
-from json import dumps as json_dump, loads as json_loads
+from json import dumps as json_dump
+from json import loads as json_loads
+
+from colorama import Fore, Style
+from colorama import init as colorama_init
+from kafka import KafkaConsumer
+from redis import Redis
+
+from redis_manager import RedisManager
 
 """
 This script should be used to fetch valid transaction from kafka broker\n
@@ -41,7 +45,7 @@ def create_consumer(servers: list, topics:list, consumer_group="transactions-gro
             if res <= 0:
                 raise Exception(f"List append of transaction:{message} failed")
     except Exception as e:
-        print(e)
+        print(Fore.RED + f"Exception {e}" + Style.RESET_ALL)
         return
 
 def process_transaction(db_manager: Redis, txn, list_name="transactions") -> int:

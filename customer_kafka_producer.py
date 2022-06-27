@@ -5,7 +5,6 @@ from random import randrange, sample
 from threading import Thread
 from time import sleep, time
 from uuid import uuid4
-from colorama import Fore, Style
 
 from kafka import KafkaAdminClient, KafkaProducer
 from kafka.admin import  NewTopic
@@ -157,7 +156,7 @@ class CustomerProducer(KafkaProducerWrapper):
         sleep_timings = []
         print(turnout)
         for tval in turnout:
-            sleep_time = round(tval/quantity, 5) / 60 # in seconds
+            sleep_time = 600 / round(tval/quantity, 2) # in seconds
             sleep_timings.append(sleep_time)
 
         assert quantity >= 1

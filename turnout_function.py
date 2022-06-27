@@ -2,15 +2,15 @@ import numpy as np
 
 class TurnoutFunction():
     
-    def __init__(self, hour_pair:tuple = (8,20), hour_step:float = 0.1, txn_within_step:int = 100) -> None:
+    def __init__(self, hour_pair:tuple = (8,20), time_step:float = 0.1, txn_within_step:int = 100) -> None:
         """
         This class models the "turnout" function e.g how many people transacion must take place\n
         within the "txn_within_step". Default configuration express "10 transactions every 6 min"
-        - hour_pair: example -> from 8 am to 20 pm  -> (8,20)
-        - hour_step: example -> 6 min -> (0.1)
-        - txn_within-step: txn per hour_step
+        - hour_pair: example -> from 8 am to 20 pm  = (8,20)
+        - time_step: example -> 6 min = (0.1)
+        - txn_within-step: txn per "time_step"
         """
-        self.__timepoints = np.array(np.arange(hour_pair[0], hour_pair[1], hour_step))
+        self.__timepoints = np.array(np.arange(hour_pair[0], hour_pair[1], time_step))
         self.__turnout = np.array([0.0 for num in self.__timepoints])
 
         for i in range(len(self.__timepoints)):

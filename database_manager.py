@@ -53,7 +53,7 @@ class DatabaseManager:
         res = self.__collection.update_one(query, newvalues)
         return res
     
-    def update_many(self, query, newvalues):
+    def update_many(self, query, newvalues, filters):
         """
         Usage example:
             - query = { }
@@ -62,8 +62,16 @@ class DatabaseManager:
             "$inc" can increase/decrease values\n
             This allows for updating many documents matching the query
         """
-        res = self.__collection.update_many(query, newvalues)
+        res = self.__collection.update_many(filter=query, update=newvalues, array_filters=filters)
         return res
 
+    def delete_many(self, query) -> bool:
+        """
+        Deletes all documents given query. Usage:\n
+        - query = {} -> delete all
+        """
+        res = self.__collection.delete_many(query) 
+        return res.deleted_count > 0
+        
     def get_client(self):
         return self.__myclient

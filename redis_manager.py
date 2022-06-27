@@ -1,4 +1,3 @@
-from select import select
 import redis
 
 class RedisManager():

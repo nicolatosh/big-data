@@ -53,8 +53,8 @@ producers_threads = []
 
 ### -- CONFIGURATION PARAMS -- ###
 INTERACTIVE_MODE = True # False to disable console views
-NUM_TRIALS = 2 # simulation cycles
-SIMULATION_TRIAL_TOTAL_TIME = 60 #seconds
+NUM_TRIALS = 1 # simulation cycles
+SIMULATION_TRIAL_TOTAL_TIME = 5 #seconds
 CUSTOMERS_PER_CITY = 10 # random persons/consumers
 CUSTOMERS_THREADS = 2
 RETAILS_PROCESSES = 2
@@ -151,7 +151,21 @@ if __name__ == "__main__":
         # 3. Execute supply chain update of ROP
         # 4. Chain check for sending orders to retails
         batch_processor = TxnProcessor()
+
+        # batch processing
         sales_velocity = batch_processor.calculate_daily_sales()
+        stat_customerbest = batch_processor.get_kpi_customer_highest()
+        stat_producthighest = batch_processor.get_kpi_product_highest()
+        stat_productbestsell = batch_processor.get_kpi_product_bestsell()
+        
+
+        print(Fore.GREEN + f" == STATISTICS TRIAL {str(j)} ==\n" + Style.RESET_ALL)
+        print(Fore.GREEN + "Best customer:" + Style.RESET_ALL + f"{stat_customerbest[0]} spent: {stat_customerbest[1]}")
+        print(Fore.GREEN + "Product sold the most:" + Style.RESET_ALL + f"{stat_productbestsell[0]} quantity: {stat_productbestsell[1]}")
+        print(Fore.GREEN + "Product highest revenue:" + Style.RESET_ALL +f"{stat_producthighest[0]} revenue: {stat_producthighest[1]}")
+        print(Fore.GREEN + "\n == END STATISTICS == \n" + Style.RESET_ALL)
+        batch_processor.turn_off_spark()
+
         chain.calculate_and_update_rop(sales_velocity)
         chain.send_orders()
         sleep(5)

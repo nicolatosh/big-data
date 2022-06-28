@@ -42,7 +42,8 @@ class KafkaProducerWrapper(object):
         try:
             self.__admin.create_topics(new_topics=topic_list, validate_only=False)
         except TopicAlreadyExistsError as ex:
-            print(ex)
+            # Does not really matter
+            pass
 
     def create_producer(self) -> None:
         """
@@ -154,7 +155,6 @@ class CustomerProducer(KafkaProducerWrapper):
         """
         # calculating frequency of txn to be sent in order to reach the turnout
         sleep_timings = []
-        print(turnout)
         for tval in turnout:
             sleep_time = 600 / round(tval/quantity, 2) # in seconds
             sleep_timings.append(sleep_time)

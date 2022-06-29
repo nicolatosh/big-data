@@ -58,6 +58,7 @@ class DatabaseManager:
         Usage example:
             - query = { }
             - newvalues = { "$inc": { "money.$[]": 100 }}\n
+            - filters check mongo docs
 
             "$inc" can increase/decrease values\n
             This allows for updating many documents matching the query

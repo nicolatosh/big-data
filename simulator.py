@@ -18,6 +18,18 @@ from supply_chain import SupplyChain
 from turnout_function import TurnoutFunction
 
 
+### -- CONFIGURATION PARAMS -- ###
+INTERACTIVE_MODE = True # False to disable console views
+NUM_TRIALS = 1 # simulation cycles
+SIMULATION_TRIAL_TOTAL_TIME = 10 #seconds
+CUSTOMERS_PER_CITY = 10 # random persons/consumers
+CUSTOMERS_THREADS = 2
+RETAILS_PROCESSES = 2
+TIME_STEP = 0.1 # 0.1 hours = 6 min
+TRANSACTIONS_PER_STEP = 10000 # 1000 txns within "TIME_STEP" minutes
+### -- END PARAMS -- ###
+
+
 def simple_printer(collection:list, item_name:str):
     print(Fore.GREEN + f"\nAvailable {item_name}:\n" + Style.RESET_ALL)
     for i, item in enumerate(collection):
@@ -51,21 +63,10 @@ signal(SIGINT, ctrlc_manager)
 consumers_processes = []
 producers_threads = []
 
-### -- CONFIGURATION PARAMS -- ###
-INTERACTIVE_MODE = True # False to disable console views
-NUM_TRIALS = 1 # simulation cycles
-SIMULATION_TRIAL_TOTAL_TIME = 5 #seconds
-CUSTOMERS_PER_CITY = 10 # random persons/consumers
-CUSTOMERS_THREADS = 2
-RETAILS_PROCESSES = 2
-TIME_STEP = 0.1 # 0.1 hours = 6 min
-TRANSACTIONS_PER_STEP = 1000 # 1000 txns within "TIME_STEP" minutes
-### -- END PARAMS -- ###
-    
 # Driver code
 if __name__ == "__main__":
     colorama_init() 
-    print(Fore.GREEN + 'Retail script started! ' + Style.RESET_ALL)
+    print(Fore.GREEN + 'Starting creation of entites' + Style.RESET_ALL)
     
     # Creating the retails 
     retail_builder = RetailBuilder()
@@ -155,8 +156,8 @@ if __name__ == "__main__":
         # batch processing
         sales_velocity = batch_processor.calculate_daily_sales()
         stat_customerbest = batch_processor.get_kpi_customer_highest()
-        stat_producthighest = batch_processor.get_kpi_product_highest()
-        stat_productbestsell = batch_processor.get_kpi_product_bestsell()
+        stat_productbestsell = batch_processor.get_kpi_product_highest()
+        stat_producthighest = batch_processor.get_kpi_product_bestsell()
         
 
         print(Fore.GREEN + f" == STATISTICS TRIAL {str(j)} ==\n" + Style.RESET_ALL)

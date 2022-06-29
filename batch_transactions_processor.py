@@ -1,17 +1,18 @@
 
-from redis_manager import RedisManager
-from json import loads as json_loads
-from colorama import init as colorama_init, Fore, Style
-from pyspark.sql import SparkSession, Row
-from pyspark.sql.functions import array, explode_outer, lit, floor, rand, when, from_json, max, col, round
-from pyspark.sql.types import StructType,StructField, StringType, NumericType, MapType
 import json
+from json import loads as json_loads
 
+from colorama import init as colorama_init
+from pyspark.sql import Row, SparkSession
+from pyspark.sql.functions import (col, explode_outer, max, round)
 
 from redis_manager import RedisManager
 
 
 class TxnProcessor():
+    """
+    Batch processing
+    """
 
     spark = None
 
@@ -69,25 +70,28 @@ class TxnProcessor():
         
     def get_kpi_customer_highest(self) -> tuple:
         """
-        Customer with the highest total cost
+        Customer with the highest total cost\n
+        returns the total spent by client
         """
         customer_highest = self.table.groupBy('client_id').agg(max('total_cost')).sort(col('max(total_cost)').desc())
         customer_highest_first = customer_highest.limit(1)
         chf = customer_highest_first.select(["client_id","max(total_cost)"]).rdd.reduceByKey(lambda x, y: (x, y)).collect()
         return chf[0]
 
-    def get_kpi_product_highest(self) -> tuple:
+    def get_kpi_product_sold_the_most(self) -> tuple:
         """
-        Product sold the most (highest daily sales velocity)
+        Product sold the most (highest daily sales velocity)\n
+        returns sum of quantities
         """
         self.product_sold_most = self.table.groupBy('upc','description','price').sum('quantity').withColumnRenamed('sum(quantity)','daily sales velocity').sort(col('daily sales velocity').desc())
         _product_sold_most_first = self.product_sold_most.limit(1)
         psmf = _product_sold_most_first.select(["upc","daily sales velocity"]).rdd.reduceByKey(lambda x, y: (x, y)).collect()
         return psmf[0]
 
-    def get_kpi_product_bestsell(self) -> tuple:
+    def get_kpi_product_highest_revenue(self) -> tuple:
         """
-        Product with highest revenue (price*quantity)
+        Product with highest revenue\n
+        returns (price*quantity)
         """
         product_highest_revenue = self.product_sold_most.withColumn('revenue', self.product_sold_most['price']*self.product_sold_most['daily sales velocity'])
         product_highest_revenue = product_highest_revenue.select('*',round('revenue',2)).drop('revenue').withColumnRenamed('round(revenue, 2)', 'revenue')

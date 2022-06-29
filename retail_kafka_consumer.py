@@ -101,7 +101,7 @@ def apply_transaction(txn, db_manager: DatabaseManager, shop_id, orderer:KafkaPr
                         res = db_manager.update(*args)
                         issue_order(orderer, order_topic, order)   
     except Exception as e:
-        print(Fore.RED + f"Exception {e}" + Style.RESET_ALL)
+        print(Fore.RED + f"{e}" + Style.RESET_ALL)
         return False    
     print(Fore.GREEN +  f"Transaction {txn['txn_id']} done " + Style.RESET_ALL)
     return True

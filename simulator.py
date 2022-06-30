@@ -28,7 +28,7 @@ CUSTOMERS_PER_CITY = 10 # random persons/consumers
 CUSTOMERS_THREADS = 2
 RETAILS_PROCESSES = 2
 TIME_STEP = 0.1 # 0.1 hours = 6 min
-TRANSACTIONS_PER_STEP = 10 # 1000 txns within "TIME_STEP" minutes
+TRANSACTIONS_PER_STEP = 10000 # 1000 txns within "TIME_STEP" minutes
 ### -- END PARAMS -- ###
 
 

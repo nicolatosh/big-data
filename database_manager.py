@@ -23,7 +23,7 @@ class DatabaseManager:
         self.__collection = self.__database[collection_name]
 
     # General Write operation
-    def insert_document(self, document:list[dict]) -> bool:
+    def insert_document(self, document:list) -> bool:
         res = False
         if len(document) > 1:
             res = self.__collection.insert_many(document) != None

@@ -82,9 +82,6 @@ def apply_transaction(txn, db_manager: DatabaseManager, shop_id, orderer:KafkaPr
             with session.start_transaction():
                 for item in items:
                     res = db_manager.update({"retailId": shop_id, "inventory": {"$elemMatch": {"upc": item['upc'], "stock_level": {"$gte": item['quantity']}}}}, {"$inc": {"inventory.$.stock_level": -item['quantity']}})
-                    # res2 = db_manager.execute_query([{"retailId": shop_id, "inventory": {"$elemMatch": {"upc": item['upc'], "stock_level": {"$gte": item['quantity']}}}}, {"inventory.$": 1}])
-                    # print(f"RES for upc:{item['upc']} : {list(res2)}")
-
                     if (not(res.acknowledged) or(res.matched_count  != 1) or (res.modified_count != 1)):
                         # This provides for automatic rollback
                         raise Exception(Fore.YELLOW + f"Transaction {txn['txn_id']} failed " + Style.RESET_ALL)
@@ -93,7 +90,7 @@ def apply_transaction(txn, db_manager: DatabaseManager, shop_id, orderer:KafkaPr
                     # Check wheter to reorder
                     res_item = list(res)[0]
                     res_item = res_item["inventory"][0]
-                    print(f"ITEM {res_item}")
+                    print(Fore.LIGHTGREEN_EX + "Item after update:" + Style.RESET_ALL + f'{res_item}')
                     if ((res_item['stock_level'] < res_item['rop']) and not res_item['in_restock']):
                         order = {"order_id": str(uuid4()), "retail_id": shop_id, "upc": item['upc'], "quantity": res_item['reorder_quantity']}
                         # Set restock flag
@@ -147,7 +144,8 @@ def read_messages(consumer_id:int, message) -> None:
     Helper function for reading the message received by the consumer
     """
     # To consume latest messages and auto-commit offsets
-    print(f"[consumer [{consumer_id}] t: {message.topic} p:{message.partition} o:{message.offset}] -> [key:{message.key} value:{message.value}]")
+    print(Fore.GREEN + "\nTxn message:" + Style.RESET_ALL)
+    print(f"[consumer [{consumer_id}] t: {message.topic} p:{message.partition} o:{message.offset}] -> [key:{message.key} value:{message.value}]\n")
 
  
 def create_order_receiver(servers:list, topic:str, consumer_group:str = "orders-group"):

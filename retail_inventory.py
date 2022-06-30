@@ -13,7 +13,7 @@ class RetailInventory():
         self.__manager.select_collection(self.collection_name)
         self.__inventory = Inventory()
 
-    def build_inventories(self, retails_list: list[dict], inventory_size=10, random_items=True) -> None:
+    def build_inventories(self, retails_list: list, inventory_size=10, random_items=True) -> None:
         """
         Method to create shops/retails with inventory. Each
         item will have random quantity. Check Inventory script

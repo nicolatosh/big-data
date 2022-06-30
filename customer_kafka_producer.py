@@ -65,7 +65,7 @@ class CustomerProducer(KafkaProducerWrapper):
     __items = []
     __condition = True
 
-    def __init__(self, servers: list, topic: str, items: list, customer: list[Customer]) -> None:
+    def __init__(self, servers: list, topic: str, items: list, customer: list) -> None:
         super().__init__(servers, topic)
         self.__producer = self.producer
         self.__topic = self.topic
@@ -145,7 +145,7 @@ class CustomerProducer(KafkaProducerWrapper):
             if ( _time >= simulation_time):
                 return
     
-    def create_producers_threads(self, turnout:list, simulation_time:int = 60*60*12, quantity:int = 10) -> list[Thread]:
+    def create_producers_threads(self, turnout:list, simulation_time:int = 60*60*12, quantity:int = 10) -> list:
         """
         Produces shares the same KafkaProducer instance. Different threads
         can be spawned to send messages.

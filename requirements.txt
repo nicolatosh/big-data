@@ -2,4 +2,7 @@ colorama
 pytest
 pymongo
 kafka-python
+pyspark
+requests
+numpy
 redis

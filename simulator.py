@@ -1,8 +1,8 @@
+from cmath import e
 from os import kill as os_kill
 from os import name as os_name
 from signal import SIGINT, SIGTERM, signal
-import stat
-from subprocess import CREATE_NEW_CONSOLE, CREATE_NO_WINDOW, Popen
+from subprocess import Popen
 from sys import executable
 from time import sleep
 
@@ -17,6 +17,7 @@ from retail_items import RetailItems
 from retail_outlet import RetailBuilder
 from supply_chain import SupplyChain
 from turnout_function import TurnoutFunction
+from os import name as os_name
 
 
 ### -- CONFIGURATION PARAMS -- ###
@@ -27,16 +28,22 @@ CUSTOMERS_PER_CITY = 10 # random persons/consumers
 CUSTOMERS_THREADS = 2
 RETAILS_PROCESSES = 2
 TIME_STEP = 0.1 # 0.1 hours = 6 min
-TRANSACTIONS_PER_STEP = 10000 # 1000 txns within "TIME_STEP" minutes
+TRANSACTIONS_PER_STEP = 10 # 1000 txns within "TIME_STEP" minutes
 ### -- END PARAMS -- ###
 
 
 def simple_printer(collection:list, item_name:str):
+    """
+    Helper for printing lists
+    """
     print(Fore.GREEN + f"\nAvailable {item_name}:\n" + Style.RESET_ALL)
     for i, item in enumerate(collection):
         print(f'{i}. {item}' + Style.RESET_ALL)
 
 def ctrlc_manager(signum, frame):
+    """
+    Manages CTRL + C termination
+    """
     print(Fore.GREEN + " \n== Terminating application ==" + Style.RESET_ALL)
     for p in consumers_processes:
         if os_name == 'nt':  # windows
@@ -48,6 +55,9 @@ def ctrlc_manager(signum, frame):
     exit(0)
 
 def end_simulation():
+    """
+    Kills proceesses
+    """
     print(Fore.CYAN + " \n== Ending simulation ==" + Style.RESET_ALL)
     for p in consumers_processes:
         if os_name == 'nt':  # windows
@@ -125,13 +135,18 @@ if __name__ == "__main__":
         for i, topic in enumerate(topics):
             group = f"{selected_city}.{i}"
             # Consumer process on new pyhton shell
-            p = Popen([executable, "retail_kafka_consumer.py", "-s", *bootstrap_servers, "-c", f'{group}', "-t", f'{topic}', "-p", str(RETAILS_PROCESSES)], creationflags= CREATE_NEW_CONSOLE if INTERACTIVE_MODE else CREATE_NO_WINDOW)      
-            
-            #p = Popen([executable, "retail_kafka_consumer.py", "-s", *bootstrap_servers, "-c", f'{group}', "-t", f'{topic}', "-p", f"{RETAILS_PROCESSES}"], shell=True)      
+            if os_name != 'nt':
+                p = Popen(['python3', "retail_kafka_consumer.py", "-s", *bootstrap_servers, "-c", f'{group}', "-t", f'{topic}', "-p", str(RETAILS_PROCESSES)])      
+            else:
+                from subprocess import CREATE_NEW_CONSOLE, CREATE_NO_WINDOW
+                p = Popen([executable, "retail_kafka_consumer.py", "-s", *bootstrap_servers, "-c", f'{group}', "-t", f'{topic}', "-p", str(RETAILS_PROCESSES)], creationflags= CREATE_NEW_CONSOLE if INTERACTIVE_MODE else CREATE_NO_WINDOW)      
             consumers_processes.append(p)
 
         # Starting batch transaction manager
-        txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags= CREATE_NEW_CONSOLE if INTERACTIVE_MODE else CREATE_NO_WINDOW)
+        if os_name != 'nt':
+            txn_manager = Popen(['python3', "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics])
+        else:
+            txn_manager = Popen([executable, "transactions_kafka_consumer.py", "-s", *bootstrap_servers, "-c", "transactions_group", "-t", *topics], creationflags= CREATE_NEW_CONSOLE if INTERACTIVE_MODE else CREATE_NO_WINDOW)
         consumers_processes.append(txn_manager)
 
         # Starting supply chain
@@ -177,7 +192,7 @@ if __name__ == "__main__":
 
         chain.calculate_and_update_rop(sales_velocity)
         chain.send_orders()
-        sleep(5)
+        sleep(5) 
         end_simulation()
     exit(0)
 

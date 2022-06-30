@@ -15,4 +15,3 @@ docker-compose -f ./docker-files/docker-compose-redis.yaml up -d
 docker-compose -f ./docker-files/docker-compose-multinode.yaml up -d 
 
 echo -e "${GREEN} == Done == ${NC}"
- 

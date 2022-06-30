@@ -95,23 +95,50 @@ In short the system implements a pipeline for processing data coming from client
 
 #### How to run
 
-```
-#Make sure docker daemon is running
 
+The project comes with a `dockerfile` that you can use to create an image an then a running container.
+```bash
+docker build -f .\dockerfile.yaml -t bigdataimg:latest . # creation of the image, might take some minutes
+docker run --name bigdata -it --network="host" bigdataimg   # starting of container
+```
+
+At this point you should have interactive access to the docker container.
+To run the other stacks you need, open a new shell and:
+
+```bash
+./start-stack.sh # This will bootstrap all the docker compose stacks required
+./stop-stack.sh  # To stop the stack 
+```
+
+Now you have you host system with docker stack running.
+To activate the simulation with default params just run the following command
+within your interactive container
+```
+pyhton3 ./simulator.py # then select for "como"
+```
+You can tune the params of the simulator script within the script itself
+
+> *NOTE*: if you want to use different cities you should set *TRUE* the *ONLINE_MODE* flag in *retail_outlet.py* 
+
+
+##### Alternative for running
+You can run the framework directly installing dependencies on your machine:
+
+```bash
 1 pip install -r requirements.txt 
 2 ./start-stack.sh
 3 python3 ./simulator.py
 
-Once simulator started, type "como" as city to run the experiment
+#Once simulator started, type "como" as city to run the experiment
 
 To stop the stack run:
  ./stop-stack.sh
 ```
-
 Framework has been tested with:
 
 - Python 3.9
 - Docker desktop 4.8.2
+- Windows 10/11 & Ubuntu 20.1
 
 ---
 

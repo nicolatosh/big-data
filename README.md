@@ -8,7 +8,7 @@
 
 ***Abstract***
 
-The project is a big data system to manage automatic reorder of goods for supermarkets large supply chains. GDO is organized in hierarchical structure in which a large supply chain provides items for many retails. The system includes three different players, customers, retails and the supplier that exchanges messages in a realistic fashion using Kafka message queue.
+The project is a big data system to manage automatic reorder of goods for supermarkets large supply chains. GDO is organized in a hierarchical structure in which a large supply chain provides items for many retailers. The system includes three different players: customers, retailers and the supplier, that exchange messages in a realistic fashion using Kafka message queue.
 In short the system implements a pipeline for processing data coming from clients transactions.
 
 ---
@@ -17,12 +17,12 @@ In short the system implements a pipeline for processing data coming from client
 
 
 
-- [x] Creation of clients and retails using scraping 
+- [x] Creation of clients and retail stores using scraping 
 
   > - https://www.esselungaacasa.it/ecommerce/
   > - https://www.punti-vendita.com/esselunga.htm
 
-- [x] Creation of Inventories for each retail/shop starting from a raw list of products
+- [x] Creation of Inventories for each retail shop starting from a raw list of products
 
 - [x] Simulation of customers e.g clients with random/configurable `transactions`(products with quantity and price)
 
@@ -73,9 +73,9 @@ In short the system implements a pipeline for processing data coming from client
 
 > Spark related
 >
-> 1. `retail_kafka_consumer` Shop/retail with its inventory, capable of sending orders and manage client's transactions
+> 1. `retail_kafka_consumer` Retail shop with its inventory, capable of sending orders and manage client's transactions
 > 2. `customer_kafka_producer`: Customer that buys items form a shop (Kafka producer)
-> 3. `supply_chain`: Kafka producer & consumer to simulate the large Inventory system that manages all the retails
+> 3. `supply_chain`: Kafka producer & consumer to simulate the large Inventory system that manages all the retailers
 > 4. `transactions_kafka_consumer`: Kafka consumer that pushes valid transactions to Redis database.
 > 5. `batch_transaction_processor`: PySpark, batch processing of transactions
 
@@ -121,7 +121,7 @@ Simulation aims to reproduce working days of communication between parties.
 
 How it works?
 
-- Generates clients, retails based on user city selection
+- Generates clients, retailers based on user city selection
 - Simulation trial starts with tunable params
 - Clients "living" in the city of the shop simulate transactions following a particular turnout function; given a time instant there will be a given amount of transactions to be produced
 - At the end of each simulation simple statistics are printed out
@@ -150,10 +150,10 @@ TRANSACTIONS_PER_STEP = 1000 # 1000 txns within "TIME_STEP" minutes, can scale t
 
 ##### List of Kafka topics
 
-+ `<city>.<shopid>` each city retail pair has its own topic, used to send transactions towards a retail
++ `<city>.<shopid>` each city retail pair has its own topic, used to send transactions towards a retailer
 + `<city>.<shopid>.validtxns`valid transactions goes there
 + `<shopid>.receiveorder` shops receive orders from the chain
-+ `<shopid>.requestorder` retail can request restock order to the chain
++ `<shopid>.requestorder` retailer can request restock order to the chain
 
 ---
 

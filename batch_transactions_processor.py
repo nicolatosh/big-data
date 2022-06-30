@@ -3,21 +3,27 @@ import json
 from json import loads as json_loads
 
 from colorama import init as colorama_init
-from pyspark.sql import Row, SparkSession
+from pyspark.sql import SparkSession
 from pyspark.sql.functions import (col, explode_outer, max, round)
 
 from redis_manager import RedisManager
-
+from database_manager import DatabaseManager
+from datetime import datetime
+from os import remove as os_remove
 
 class TxnProcessor():
     """
     Batch processing
     """
+    database_name = "batchstats"
+    collection_name = "statistics"
 
     spark = None
 
     def __init__(self) -> None:
         self.__redis_manager = RedisManager().get_instance()
+        self.__mongo_db_manager = DatabaseManager()
+        self.__mongo_db_manager.connect_to_database(self.database_name, self.collection_name)
         self.spark = SparkSession \
             .builder \
             .appName("Spark_batch_processing") \
@@ -53,6 +59,7 @@ class TxnProcessor():
         # Load json file of transactions
         multiline_df = self.spark.read.option("multiline","true").option("inferSchema","true") \
             .json("transactions.json")
+
 
         # Extracting shopping list
         exploding = multiline_df.withColumn("products_new", explode_outer("shopping_list"))
@@ -99,6 +106,18 @@ class TxnProcessor():
         phrf = product_highest_revenue_first.select(["upc","revenue"]).rdd.reduceByKey(lambda x, y: (x, y)).collect()
         return phrf[0]
     
+
+    def save_stats(self, data:list, trial:int) -> bool:
+        """
+        Save statistics data. Data will be timestamped.
+        - data: whatever data in list 
+        - trial: the trial number which data refers to
+        """
+        stats = {'timestamp': str(datetime.now().isoformat()), 'trial_number': trial, 'data': data}
+        return self.__mongo_db_manager.insert_document([stats])
+
     def turn_off_spark(self):
         self.spark.stop()
+        # removing temp file
+        os_remove("transactions.json")
         return

@@ -1,6 +1,7 @@
 from os import kill as os_kill
 from os import name as os_name
 from signal import SIGINT, SIGTERM, signal
+import stat
 from subprocess import CREATE_NEW_CONSOLE, CREATE_NO_WINDOW, Popen
 from sys import executable
 from time import sleep
@@ -154,11 +155,18 @@ if __name__ == "__main__":
         batch_processor = TxnProcessor()
 
         # batch processing
+        stats = []
         sales_velocity = batch_processor.calculate_daily_sales()
+        stats.append(sales_velocity)
         stat_customerbest = batch_processor.get_kpi_customer_highest()
-        stat_productbestsell = batch_processor.get_kpi_product_highest()
-        stat_producthighest = batch_processor.get_kpi_product_bestsell()
-        
+        stats.append(stat_customerbest)
+        stat_productbestsell = batch_processor.get_kpi_product_sold_the_most()
+        stats.append(stat_productbestsell)
+        stat_producthighest = batch_processor.get_kpi_product_highest_revenue()
+        stats.append(stat_producthighest)
+
+        # saving stats to db
+        batch_processor.save_stats(stats, str(j))        
 
         print(Fore.GREEN + f" == STATISTICS TRIAL {str(j)} ==\n" + Style.RESET_ALL)
         print(Fore.GREEN + "Best customer:" + Style.RESET_ALL + f"{stat_customerbest[0]} spent: {stat_customerbest[1]}")
